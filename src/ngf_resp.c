@@ -30,6 +30,7 @@ char* ngf_resp_conent_type(char* file)
   if (strcmp(ext, "js") == 0) return "application/javascript";
   if (strcmp(ext, "png") == 0) return "image/png";
   if (strcmp(ext, "jpg") == 0) return "image/jpeg";
+  if (strcmp(ext, "gif") == 0) return "image/gif";
   
   return "text/html";
 }
@@ -39,31 +40,28 @@ char* ngf_gen_content(char* file, char* content)
 {
   FILE *fp;
   char ch;
-  int index = 0, max = CONTENT_SIZE;
+  int index = 0;
+  unsigned int size;
 
-  fp = fopen(file, "r");
+  fp = fopen(file, "rb");
   if (fp == NULL) return "\0";
   
-  content = (char *)realloc(content, max);
-  memset(content, 0, max);
-  while((ch = fgetc(fp)) != EOF)
-  {
-    if (index > max)
-    {
-      int i, size;
-      size = index - 1;
-      char tmp[size];
+  // initialize.
+  content = (char *)realloc(content, CONTENT_SIZE);
+  memset(content, 0, CONTENT_SIZE);
+  
+  fseek(fp, 0, SEEK_END);
+  size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
 
-      memcpy(tmp, content, size);
-      max *= 2;
-      content = (char *)realloc(content, max);
-      memset(content, 0, max);
-      if (content == NULL) ngf_panic("Can't arrocate memory");
-      memcpy(content, tmp, size);
-    }
+  // size set.
+  content = (char *)realloc(content, size);
+  memset(content, 0, size);
+
+  // Read file.
+  while ((ch = fgetc(fp)) != EOF)
     content[index++] = ch;
-  }
-      
+
   fclose(fp); 
 
   return content;

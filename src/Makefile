@@ -1,5 +1,5 @@
 run:
-	gcc \
+	@gcc \
 	./ngimf.c \
 	./ngf_utils.c \
 	./ngf_recv.c \
