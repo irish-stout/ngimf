@@ -1,12 +1,12 @@
 #include <string.h>
 #include "ngf_recv.h"
 
-ngfRecvHeader ngf_recv_header_info(char* buf)
+ngfRecvInfo ngf_recv_info(char* buf)
 {
   int i = 0, j = 0;
   char ch;
   short mode = 0; // 0: method, 1:path, 2:Protocol
-  ngfRecvHeader header;
+  ngfRecvInfo header;
   memset(header.method, 0, 8);
   memset(header.path, 0, 256);
   memset(header.protocol, 0, 16);

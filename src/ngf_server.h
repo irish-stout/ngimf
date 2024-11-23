@@ -1,0 +1,1 @@
+void ngf_server();
