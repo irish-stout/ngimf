@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include "ngf_utils.h"
 #include "ngf_recv.h"
 #include "ngf_server.h"
@@ -12,11 +14,77 @@
 #define PORT 9999
 #define BUF_SIZE 2048
 
+void* connection_handle(void *arg)
+{
+  char buf[BUF_SIZE];
+  int accept_sockfd = *((int *)arg);
+  
+  // Receive
+  memset(buf, 0, BUF_SIZE);
+  if (recv(accept_sockfd, buf, BUF_SIZE, 0) < 0)
+  {
+    close(accept_sockfd);
+    return NULL;
+  }
+  ngfRecvInfo recv;
+  recv = ngf_recv_info(buf);
+
+  p(buf);
+
+  // file name
+  char *path = recv.path[1] == '\0' ? "/index.html" : recv.path;
+  char file[strlen("./static") + strlen(path)];
+  strcpy(file, "./static");
+  strcat(file, path);
+  
+  // Content (Response body)
+  ngfFile fileInfo;
+  fileInfo = ngf_res_body(file);
+
+  // 404
+  if (fileInfo.size == 0)
+  {
+    char *res = "HTTP/1.1 404 NOT FOUND\r\n"
+                "Content-type: text/html\r\n\r\n"
+                "<html><body><h1>404 NOT FOUND</h1></body></html>";
+    if (send(accept_sockfd, res, strlen(res), 0) < 0) return NULL;
+  }
+  else
+  {
+    // Reponse Header.
+    ngfResHeader resHeader;
+    resHeader.protocol = "HTTP/1.1";
+    resHeader.statusCode = 200;
+    resHeader.reason = "OK";
+    resHeader.contentLength = fileInfo.size;
+    resHeader.contentType = ngf_res_conent_type(recv.path);
+    ngf_res_header(&resHeader);
+
+    // Response.
+    int resSize = resHeader.size + fileInfo.size; 
+    char res[resSize];
+    memset(res, 0, resSize);
+    memcpy(res, resHeader.data, resHeader.size);
+    memcpy(&res[resHeader.size], fileInfo.data, fileInfo.size);
+    
+    // Send.
+    if (send(accept_sockfd, res, sizeof(res), 0) < 0) return NULL;
+    // free(resHeader.data);
+  }
+  
+  // Closing.
+  close(accept_sockfd);
+  // free(arg);
+  // free(fileInfo.data);
+  return NULL;
+}
+
+
 void ngf_server()
 {
   int sockfd, accept_sockfd;
   socklen_t srvlen, clilen;
-  char buf[BUF_SIZE];
+  
   struct sockaddr_in serv_addr, cli_addr;
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,59 +112,10 @@ void ngf_server()
     // Socket name.
     if (getsockname(accept_sockfd, (struct sockaddr*)&cli_addr, (socklen_t *)&clilen) < 0) continue;
 
-    // Receive
-    memset(buf, 0, BUF_SIZE);
-    if (recv(accept_sockfd, buf, BUF_SIZE, 0) < 0) continue;
-    ngfRecvInfo recv;
-    recv = ngf_recv_info(buf);
-    
-    // file name
-    char *path = recv.path[1] == '\0' ? "/index.html" : recv.path;
-    char file[strlen("./static") + strlen(path)];
-    strcpy(file, "./static");
-    strcat(file, path);
-    
-    // Content (Response body)
-    ngfFile fileInfo;
-    fileInfo = ngf_res_body(file);
-
-    // 404
-    if (fileInfo.size == 0)
-    {
-      char *res = "HTTP/1.1 404 NOT FOUND\r\n"
-                  "Content-type: text/html\r\n\r\n"
-                  "<html><body><h1>404 NOT FOUND</h1></body></html>";
-      if (send(accept_sockfd, res, strlen(res), 0) < 0) continue;
-    }
-    else
-    {
-      // Reponse Header.
-      ngfResHeader resHeader;
-      resHeader.protocol = "HTTP/1.1";
-      resHeader.statusCode = 200;
-      resHeader.reason = "OK";
-      resHeader.contentLength = fileInfo.size;
-      resHeader.contentType = ngf_res_conent_type(recv.path);
-      ngf_res_header(&resHeader);
-
-      // Response.
-      int resSize = resHeader.size + fileInfo.size; 
-      char res[resSize];
-      memset(res, 0, resSize);
-      memcpy(res, resHeader.data, resHeader.size);
-      memcpy(&res[resHeader.size], fileInfo.data, fileInfo.size);
-      
-      // Send.
-      if (send(accept_sockfd, res, sizeof(res), 0) < 0) continue;
-      
-      // Closing.
-      free(resHeader.data);
-      free(fileInfo.data);
-    }
-    
-    close(accept_sockfd);
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, connection_handle, (void *)&accept_sockfd);
+    pthread_detach(thread_id);
   }
-
   
   close(sockfd);
 }
