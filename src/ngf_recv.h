@@ -15,5 +15,5 @@ typedef struct
 // Referer: http://172.22.156.143:9999/
 // Accept-Encoding: gzip, deflate
 // Accept-Language: en-US,en;q=0.9,ja;q=0.8
-ngfRecvInfo ngf_recv_info(char* buf);
+void ngf_recv_info(ngfRecvInfo *recv, char* buf);
 

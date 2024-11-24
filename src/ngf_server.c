@@ -26,55 +26,31 @@ void* connection_handle(void *arg)
     close(accept_sockfd);
     return NULL;
   }
-  ngfRecvInfo recv;
-  recv = ngf_recv_info(buf);
-  p(buf);
 
+  ngfRecvInfo recv;
+  ngf_recv_info(&recv, buf);
+  
   // file name
   char *path = recv.path[1] == '\0' ? "/index.html" : recv.path;
   char file[strlen("./static") + strlen(path)];
   strcpy(file, "./static");
   strcat(file, path);
-  
-  // Content (Response body)
-  ngfFile fileInfo;
-  fileInfo = ngf_res_body(file);
 
-  // 404
-  if (fileInfo.size == 0)
-  {
-    char *res = "HTTP/1.1 404 NOT FOUND\r\n"
-                "Content-type: text/html\r\n\r\n"
-                "<html><body><h1>404 NOT FOUND</h1></body></html>";
-    if (send(accept_sockfd, res, strlen(res), 0) < 0) return NULL;
-  }
-  else
-  {
-    // Reponse Header.
-    ngfResHeader resHeader;
-    resHeader.protocol = "HTTP/1.1";
-    resHeader.statusCode = 200;
-    resHeader.reason = "OK";
-    resHeader.contentLength = fileInfo.size;
-    resHeader.contentType = ngf_res_conent_type(recv.path);
-    ngf_res_header(&resHeader);
+  ngfResponse res;
+  ngf_response(&res, file);
 
-    // Response.
-    int resSize = resHeader.size + fileInfo.size; 
-    char res[resSize];
-    memset(res, 0, resSize);
-    memcpy(res, resHeader.data, resHeader.size);
-    memcpy(&res[resHeader.size], fileInfo.data, fileInfo.size);
-    
-    // Send.
-    if (send(accept_sockfd, res, sizeof(res), 0) < 0) return NULL;
-    free(resHeader.data);
+  // Send.
+  if (send(accept_sockfd, res.data, res.size, 0) < 0) 
+  {
+    close(accept_sockfd);
+    return NULL;
   }
-  
+
   // Closing.
-  close(accept_sockfd);
   free(arg);
-  free(fileInfo.data);
+  free(res.data);
+  close(accept_sockfd);
+
   return NULL;
 }
 
