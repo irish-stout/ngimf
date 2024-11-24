@@ -1,5 +1,23 @@
 #define CONTENT_SIZE 512
 
+
+typedef struct
+{
+  char *data;
+  size_t size;
+} ngfFile;
+
+typedef struct
+{
+  char *protocol;
+  size_t statusCode;
+  char *reason;
+  size_t contentLength;
+  char *contentType;
+  char *data;
+  size_t size;
+} ngfResHeader;
+
 // GET response conetnt-type.
 // File type
 // HTML file:    text/html; charset=UTF-8
@@ -9,7 +27,9 @@
 // JPEG file:    image/jpeg
 // svg file:     image/svg+xml
 // favicon file: image/vnd.microsoft.icon
-char* ngf_resp_conent_type(char* buf);
+char* ngf_res_conent_type(char* buf);
 
 // Make HTML content from file.
-char* ngf_gen_content(char* file, char* content);
+ngfFile ngf_res_body(char* file);
+
+void ngf_res_header(ngfResHeader *header);

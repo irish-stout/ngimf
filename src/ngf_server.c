@@ -18,7 +18,6 @@ void ngf_server()
   socklen_t srvlen, clilen;
   char buf[BUF_SIZE];
   struct sockaddr_in serv_addr, cli_addr;
-  char *content = malloc(CONTENT_SIZE);
 
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) ngf_panic("Can't open socket!");
@@ -52,15 +51,17 @@ void ngf_server()
     recv = ngf_recv_info(buf);
     
     // file name
-    char file[sizeof("./static") + sizeof(recv.path)];
+    char *path = recv.path[1] == '\0' ? "/index.html" : recv.path;
+    char file[strlen("./static") + strlen(path)];
     strcpy(file, "./static");
-    strcat(file, recv.path[1] == '\0'  ? "/index.html" : recv.path);
+    strcat(file, path);
     
     // Content (Response body)
-    content = ngf_gen_content(file, content);
+    ngfFile fileInfo;
+    fileInfo = ngf_res_body(file);
 
     // 404
-    if (strcmp(content, "\0") == 0)
+    if (fileInfo.size == 0)
     {
       char *res = "HTTP/1.1 404 NOT FOUND\r\n"
                   "Content-type: text/html\r\n\r\n"
@@ -69,24 +70,33 @@ void ngf_server()
     }
     else
     {
-      // Content-Type:
-      char *conetnt_type = ngf_resp_conent_type(recv.path);
-      
-      // Response header
-      char header[sizeof("HTTP/1.1 200 OK\r\nContent-type: \r\n\r\n") + sizeof(conetnt_type)];
-      sprintf(header, "HTTP/1.1 200 OK\r\nContent-type: %s\r\n\r\n", conetnt_type);
+      // Reponse Header.
+      ngfResHeader resHeader;
+      resHeader.protocol = "HTTP/1.1";
+      resHeader.statusCode = 200;
+      resHeader.reason = "OK";
+      resHeader.contentLength = fileInfo.size;
+      resHeader.contentType = ngf_res_conent_type(recv.path);
+      ngf_res_header(&resHeader);
 
       // Response.
-      char res[sizeof(header) + sizeof(content)];
-      sprintf(res, "%s%s", header, content);
-    
-      // Send response.
-      if (send(accept_sockfd, res, strlen(res), 0) < 0) continue;
+      int resSize = resHeader.size + fileInfo.size; 
+      char res[resSize];
+      memset(res, 0, resSize);
+      memcpy(res, resHeader.data, resHeader.size);
+      memcpy(&res[resHeader.size], fileInfo.data, fileInfo.size);
+      
+      // Send.
+      if (send(accept_sockfd, res, sizeof(res), 0) < 0) continue;
+      
+      // Closing.
+      free(resHeader.data);
+      free(fileInfo.data);
     }
     
     close(accept_sockfd);
   }
 
-  free(content);
+  
   close(sockfd);
 }

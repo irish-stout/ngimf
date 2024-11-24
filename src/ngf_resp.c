@@ -5,64 +5,81 @@
 #include "ngf_resp.h"
 #include "ngf_utils.h"
 
-char* ngf_resp_conent_type(char* file)
+char* ngf_res_conent_type(char* file)
 {
-  char tmp[16];
-  int i = 0, j = 0;
-  char ch;
-  bool isFound = false;
-  do
-  {
-    ch = file[i++];
-    if (isFound && ch != '\0' && ch != ' ')
-    {
-      tmp[j++] = ch;
-    }
-    else if (ch == '.') isFound = true;
-  }
-  while (ch != '\0');
+  if (strcmp(file, "/") == 0) return "text/html; charset=UTF-8";
   
-  char ext[j];
-  memcpy(ext, tmp, j);
+  char *ext = strrchr(file, '.');
+
+  if (strcmp(ext, ".html") == 0) return "text/html; charset=UTF-8";
+  if (strcmp(ext, ".css") == 0) return "text/css";
+  if (strcmp(ext, ".js") == 0) return "application/javascript";
+  if (strcmp(ext, ".png") == 0) return "image/png";
+  if (strcmp(ext, ".jpg") == 0) return "image/jpeg";
+  if (strcmp(ext, ".gif") == 0) return "image/gif";
   
-  if (strcmp(ext, "html") == 0) return "text/html; charset=UTF-8";
-  if (strcmp(ext, "css") == 0) return "text/css";
-  if (strcmp(ext, "js") == 0) return "application/javascript";
-  if (strcmp(ext, "png") == 0) return "image/png";
-  if (strcmp(ext, "jpg") == 0) return "image/jpeg";
-  if (strcmp(ext, "gif") == 0) return "image/gif";
-  
-  return "text/html";
+  return "application/octet-stream";
 }
 
 
-char* ngf_gen_content(char* file, char* content)
+ngfFile ngf_res_body(char* file)
 {
   FILE *fp;
-  char ch;
-  int index = 0;
-  unsigned int size;
+  ngfFile fileInfo;
+
+  fileInfo.size = 0;
 
   fp = fopen(file, "rb");
-  if (fp == NULL) return "\0";
-  
-  // initialize.
-  content = (char *)realloc(content, CONTENT_SIZE);
-  memset(content, 0, CONTENT_SIZE);
+  if (fp == NULL) return fileInfo;
   
   fseek(fp, 0, SEEK_END);
-  size = ftell(fp);
+  fileInfo.size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
 
-  // size set.
-  content = (char *)realloc(content, size);
-  memset(content, 0, size);
-
-  // Read file.
-  while ((ch = fgetc(fp)) != EOF)
-    content[index++] = ch;
+  fileInfo.data = (char *)malloc(fileInfo.size);
+  memset(fileInfo.data, 0, fileInfo.size);
+  fread(fileInfo.data, fileInfo.size, 1, fp);
 
   fclose(fp); 
 
-  return content;
+  return fileInfo;
 }
+
+void ngf_res_header(ngfResHeader *header)
+{
+  char buf[8];
+  sprintf(buf, "%d", header->contentLength);
+  int size = 
+    strlen(header->protocol)
+    + 1
+    + 3
+    + 1
+    + strlen(header->reason)
+    + strlen("\r\n")
+    + strlen("Content-type: ")
+    + strlen(header->contentType)
+    // + strlen("\r\n")
+    // + strlen("Content-length: ")
+    // + strlen(buf)
+    + strlen("\r\n\r\n");
+  
+  header->data = (char*)malloc(size);
+  memset(header->data, 0, size);
+
+  char *base =
+    "%s %d %s\r\n"
+    "Content-type: %s\r\n"
+    // "Content-length: %d\r\n"
+    "\r\n";
+    
+  sprintf(header->data,
+    base,
+    header->protocol,
+    header->statusCode,
+    header->reason,
+    header->contentType,
+    header->contentLength
+  );
+
+  header->size = strlen(header->data);
+} 
