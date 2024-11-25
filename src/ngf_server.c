@@ -31,25 +31,22 @@ void* connection_handle(void *arg)
   if (recv(accept_sockfd, buf, BUF_SIZE, 0) < 0)
   {
     closing(accept_sockfd, arg, NULL);
+    p("Error on receive");
     return NULL;
   }
-
-  ngfRecvInfo recv;
-  ngf_recv_info(&recv, buf);
+  // Get receve info
+  ngf_recv_info_t recv;
+  ngf_get_recv_info(&recv, buf);
   
-  // file name
-  char *path = recv.path[1] == '\0' ? "/index.html" : recv.path;
-  char file[strlen("./static") + strlen(path)];
-  strcpy(file, "./static");
-  strcat(file, path);
-
-  ngfResponse res;
-  ngf_response(&res, file);
+  // make response data
+  ngf_res_info_t res;
+  ngf_make_res_info(&res, &recv);
 
   // Send.
   if (send(accept_sockfd, res.data, res.size, 0) < 0) 
   {
     closing(accept_sockfd, arg, res.data);
+    p("Error on send");
     return NULL;
   }
 

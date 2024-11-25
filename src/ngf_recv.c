@@ -1,7 +1,7 @@
 #include <string.h>
 #include "ngf_recv.h"
 
-void ngf_recv_info(ngfRecvInfo *recv, char* buf)
+void ngf_get_recv_info(ngf_recv_info_t *recv, char* buf)
 {
   int i = 0, j = 0;
   char ch;
