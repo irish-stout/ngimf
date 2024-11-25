@@ -1,3 +1,6 @@
+#ifndef _NGF_RECV_H_
+#define _NGF_RECV_H_
+
 typedef struct
 {
   char method[8]; // GET, POST, PUT. DELETE, CONNECT, OPTIONS, TRACE, PATCH
@@ -17,3 +20,4 @@ typedef struct
 // Accept-Language: en-US,en;q=0.9,ja;q=0.8
 void ngf_recv_info(ngfRecvInfo *recv, char* buf);
 
+#endif

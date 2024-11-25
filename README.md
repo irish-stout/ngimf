@@ -1,2 +1,5 @@
-# ngimf
-NGIMF is a simple web server wrriten by C.
+# NGIMF
+NGIMF is a simple web server.
+
+## Development
+NGIMF is written by C.

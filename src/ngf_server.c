@@ -14,6 +14,13 @@
 #define PORT 9999
 #define BUF_SIZE 2048
 
+void closing(int fd, void *arg, char* data)
+{
+  if (arg != NULL) free(arg);
+  if (data != NULL) free(data);
+  close(fd);
+}
+
 void* connection_handle(void *arg)
 {
   char buf[BUF_SIZE];
@@ -23,7 +30,7 @@ void* connection_handle(void *arg)
   memset(buf, 0, BUF_SIZE);
   if (recv(accept_sockfd, buf, BUF_SIZE, 0) < 0)
   {
-    close(accept_sockfd);
+    closing(accept_sockfd, arg, NULL);
     return NULL;
   }
 
@@ -42,14 +49,11 @@ void* connection_handle(void *arg)
   // Send.
   if (send(accept_sockfd, res.data, res.size, 0) < 0) 
   {
-    close(accept_sockfd);
+    closing(accept_sockfd, arg, res.data);
     return NULL;
   }
 
-  // Closing.
-  free(arg);
-  free(res.data);
-  close(accept_sockfd);
+  closing(accept_sockfd, arg, res.data);
 
   return NULL;
 }

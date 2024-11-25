@@ -1,3 +1,6 @@
+#ifndef _NGF_RESP_H_
+#define _NGF_RESP_H_
+
 #define CONTENT_SIZE 512
 
 typedef struct
@@ -50,3 +53,5 @@ ngfResHeader make_404_header(size_t size);
 
 //
 void ngf_response(ngfResponse *res, char *file);
+
+#endif

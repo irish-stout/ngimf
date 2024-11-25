@@ -36,6 +36,4 @@ void ngf_recv_info(ngfRecvInfo *recv, char* buf)
     }
   }
   while (ch != '\n' && ch != '\0');
-  
-  // return header;
 }
