@@ -70,14 +70,14 @@ char* ngf_res_content_type(char* file)
 }
 
 
-ngf_file_t ngf_res_body(char* file)
+void
+ngf_res_body(ngf_file_t *file_info, char *file)
 {
   FILE *fp;
-  ngf_file_t fileInfo;
 
-  fileInfo.size = 0;
-  fileInfo.data = "";
-  fileInfo.status_code = 200; 
+  file_info->size = 0;
+  file_info->data = "";
+  file_info->status_code = 200; 
   fp = fopen(file, "rb");
   if (fp == NULL) 
   {
@@ -86,21 +86,19 @@ ngf_file_t ngf_res_body(char* file)
     strcpy(file, STATIC_PATH);
     strcat(file, file404);
     fp = fopen(file, "rb");
-    if (fp == NULL) return fileInfo;
-    fileInfo.status_code = 404;
+    if (fp == NULL) return;
+    file_info->status_code = 404;
   }
     
   fseek(fp, 0, SEEK_END);
-  fileInfo.size = ftell(fp);
+  file_info->size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
 
-  fileInfo.data = (char *)malloc(fileInfo.size);
-  memset(fileInfo.data, 0, fileInfo.size);
-  fread(fileInfo.data, fileInfo.size, 1, fp);
+  file_info->data = (char *)malloc(file_info->size);
+  memset(file_info->data, 0, file_info->size);
+  fread(file_info->data, file_info->size, 1, fp);
 
-  fclose(fp); 
-
-  return fileInfo;
+  fclose(fp);
 }
 
 void ngf_res_header(ngf_res_head_t *header)
@@ -166,7 +164,9 @@ ngf_res_head_t ngf_make_header(size_t size, char* file, int status_code)
   return resHeader; 
 }
 
-void ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
+
+void
+ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
 {
   // file name
   char *path = recv->path[1] == '\0' ? "/index.html" : recv->path;
@@ -176,22 +176,23 @@ void ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
 
   // Response Body.
   // Content (Response body)
-  ngf_file_t fileInfo = ngf_res_body(file);
+  ngf_file_t *file_info;
+  ngf_res_body(file_info, file);
   
   // Reponse Header.
-  ngf_res_head_t resHeader = ngf_make_header(fileInfo.size, file, fileInfo.status_code);
+  ngf_res_head_t resHeader = ngf_make_header(file_info->size, file, file_info->status_code);
 
   ngf_res_header(&resHeader);
   
   // Response.
-  res->size = resHeader.size + fileInfo.size; 
+  res->size = resHeader.size + file_info->size; 
   res->data = (char *)malloc(res->size);
   memset(res->data, 0, res->size);
   memcpy(res->data, resHeader.data, resHeader.size);
-  memcpy(&res->data[resHeader.size], fileInfo.data, fileInfo.size);
+  memcpy(&res->data[resHeader.size], file_info->data, file_info->size);
 
   // Closing.
   free(file);
-  free(fileInfo.data);
+  free(file_info->data);
   free(resHeader.data);
 }
