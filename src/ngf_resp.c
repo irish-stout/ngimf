@@ -179,6 +179,18 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
 {
   // file name
   char *path = recv->path[1] == '\0' ? "/index.html" : recv->path;
+  
+  if (strcmp(path, "/redirect") == 0) {
+    char *redirect = "HTTP/1.1 308 Permanent Redirect\r\n"
+                    "Location: https://www.google.com/\r\n"
+                    "Content-Length: 0\r\n\r\n";
+  
+    res->data = (char *)malloc(strlen(redirect));
+    res->data = redirect;
+    res->size = strlen(redirect);
+    return;
+  }
+
   char *file = (char *)malloc(strlen(STATIC_PATH) + strlen(path));
   strcpy(file, STATIC_PATH);
   strcat(file, path);
