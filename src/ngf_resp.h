@@ -60,7 +60,7 @@ void ngf_res_header(ngf_res_head_t *header);
 char* ngf_get_status_reason(int status_code);
 
 //
-ngf_res_head_t ngf_make_header(size_t size, char* file, int status_code);
+ngf_res_head_t ngf_make_header(ngf_file_t *file_info);
 
 //
 void ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv);

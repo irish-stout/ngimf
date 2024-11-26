@@ -153,14 +153,16 @@ char* get_status_reason(int status_code)
   return "";
 }
 
-ngf_res_head_t ngf_make_header(size_t size, char* file, int status_code)
+
+ngf_res_head_t
+ngf_make_header(ngf_file_t *file_info)
 {
   ngf_res_head_t resHeader;
   resHeader.protocol = "HTTP/1.1";
-  resHeader.status.code = status_code;
-  resHeader.status.reason = get_status_reason(status_code);
-  resHeader.content_length = size;
-  resHeader.content_type = ngf_res_content_type(file);
+  resHeader.status.code = file_info->status_code;
+  resHeader.status.reason = get_status_reason(file_info->status_code);
+  resHeader.content_length = file_info->size;
+  resHeader.content_type = ngf_res_content_type(file_info->name);
   return resHeader; 
 }
 
@@ -181,7 +183,7 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
   ngf_res_body(file_info);
   
   // Reponse Header.
-  ngf_res_head_t resHeader = ngf_make_header(file_info->size, file_info->name, file_info->status_code);
+  ngf_res_head_t resHeader = ngf_make_header(file_info);
 
   ngf_res_header(&resHeader);
   
