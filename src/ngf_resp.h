@@ -54,7 +54,7 @@ char* ngf_res_content_type(char* buf);
 void ngf_res_body(ngf_file_t *file_info);
 
 // 
-void ngf_res_header(ngf_res_head_t *header);
+void ngf_res_header(ngf_res_head_t *header, ngf_file_t *file_info);
 
 //
 char* ngf_get_status_reason(int status_code);

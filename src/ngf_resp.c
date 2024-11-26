@@ -101,12 +101,17 @@ ngf_res_body(ngf_file_t *file_info)
   fclose(fp);
 }
 
-void ngf_res_header(ngf_res_head_t *header)
+
+void
+ngf_res_header(ngf_res_head_t *header, ngf_file_t *file_info)
 {
+  //
+  *header = ngf_make_header(file_info);
+
   char buf[8];
-  
   sprintf(buf, "%d", header->content_length);
-  int size = 
+  
+  size_t size = 
     strlen(header->protocol)
     + 1
     + 3
@@ -183,19 +188,20 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
   ngf_res_body(file_info);
   
   // Reponse Header.
-  ngf_res_head_t resHeader = ngf_make_header(file_info);
+  ngf_res_head_t *res_header;
+  //  = ngf_make_header(file_info);
 
-  ngf_res_header(&resHeader);
+  ngf_res_header(res_header, file_info);
   
   // Response.
-  res->size = resHeader.size + file_info->size; 
+  res->size = res_header->size + file_info->size; 
   res->data = (char *)malloc(res->size);
   memset(res->data, 0, res->size);
-  memcpy(res->data, resHeader.data, resHeader.size);
-  memcpy(&res->data[resHeader.size], file_info->data, file_info->size);
+  memcpy(res->data, res_header->data, res_header->size);
+  memcpy(&res->data[res_header->size], file_info->data, file_info->size);
 
   // Closing.
   free(file_info->name);
   free(file_info->data);
-  free(resHeader.data);
+  free(res_header->data);
 }
