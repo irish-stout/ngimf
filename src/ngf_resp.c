@@ -71,42 +71,42 @@ char* ngf_res_content_type(char* file)
 
 
 void
-ngf_res_body(ngf_file_t *file_info)
+ngf_res_body(ngf_res_body_t *res_body)
 {
   FILE *fp;
 
-  file_info->size = 0;
-  file_info->status_code = 200; 
-  fp = fopen(file_info->name, "rb");
+  res_body->size = 0;
+  res_body->status_code = 200; 
+  fp = fopen(res_body->name, "rb");
   if (fp == NULL) 
   {
     char *file404 = "/404.html";
     size_t resize = strlen(STATIC_PATH) + strlen(file404);
-    file_info->name = realloc(file_info->name, resize);
-    strcpy(file_info->name, STATIC_PATH);
-    strcat(file_info->name, file404);
-    fp = fopen(file_info->name, "rb");
+    res_body->name = realloc(res_body->name, resize);
+    strcpy(res_body->name, STATIC_PATH);
+    strcat(res_body->name, file404);
+    fp = fopen(res_body->name, "rb");
     if (fp == NULL) return;
-    file_info->status_code = 404;
+    res_body->status_code = 404;
   }
     
   fseek(fp, 0, SEEK_END);
-  file_info->size = ftell(fp);
+  res_body->size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
 
-  file_info->data = (char *)malloc(file_info->size);
-  memset(file_info->data, 0, file_info->size);
-  fread(file_info->data, file_info->size, 1, fp);
+  res_body->data = (char *)malloc(res_body->size);
+  memset(res_body->data, 0, res_body->size);
+  fread(res_body->data, res_body->size, 1, fp);
 
   fclose(fp);
 }
 
 
 void
-ngf_res_header(ngf_res_head_t *header, ngf_file_t *file_info)
+ngf_res_header(ngf_res_head_t *header, ngf_res_body_t *res_body)
 {
   //
-  *header = ngf_make_header(file_info);
+  *header = ngf_make_header(res_body);
 
   char buf[8];
   sprintf(buf, "%d", header->content_length);
@@ -144,7 +144,9 @@ ngf_res_header(ngf_res_head_t *header, ngf_file_t *file_info)
   header->size = strlen(header->data);
 } 
 
-char* get_status_reason(int status_code)
+
+char*
+ngf_get_status_reason(int status_code)
 {
   int i, len;
   
@@ -160,14 +162,14 @@ char* get_status_reason(int status_code)
 
 
 ngf_res_head_t
-ngf_make_header(ngf_file_t *file_info)
+ngf_make_header(ngf_res_body_t *res_body)
 {
   ngf_res_head_t resHeader;
   resHeader.protocol = "HTTP/1.1";
-  resHeader.status.code = file_info->status_code;
-  resHeader.status.reason = get_status_reason(file_info->status_code);
-  resHeader.content_length = file_info->size;
-  resHeader.content_type = ngf_res_content_type(file_info->name);
+  resHeader.status.code = res_body->status_code;
+  resHeader.status.reason = ngf_get_status_reason(res_body->status_code);
+  resHeader.content_length = res_body->size;
+  resHeader.content_type = ngf_res_content_type(res_body->name);
   return resHeader; 
 }
 
@@ -183,25 +185,23 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
 
   // Response Body.
   // Content (Response body)
-  ngf_file_t *file_info;
-  file_info->name = file;
-  ngf_res_body(file_info);
+  ngf_res_body_t *res_body;
+  res_body->name = file;
+  ngf_res_body(res_body);
   
   // Reponse Header.
   ngf_res_head_t *res_header;
-  //  = ngf_make_header(file_info);
-
-  ngf_res_header(res_header, file_info);
+  ngf_res_header(res_header, res_body);
   
   // Response.
-  res->size = res_header->size + file_info->size; 
+  res->size = res_header->size + res_body->size; 
   res->data = (char *)malloc(res->size);
   memset(res->data, 0, res->size);
   memcpy(res->data, res_header->data, res_header->size);
-  memcpy(&res->data[res_header->size], file_info->data, file_info->size);
+  memcpy(&res->data[res_header->size], res_body->data, res_body->size);
 
   // Closing.
-  free(file_info->name);
-  free(file_info->data);
+  free(res_body->name);
+  free(res_body->data);
   free(res_header->data);
 }

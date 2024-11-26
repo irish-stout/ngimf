@@ -12,7 +12,7 @@ typedef struct
   char *data;
   size_t size;
   int status_code;
-} ngf_file_t;
+} ngf_res_body_t;
 
 typedef struct
 {
@@ -51,16 +51,16 @@ typedef struct
 char* ngf_res_content_type(char* buf);
 
 // Make HTML content from file.
-void ngf_res_body(ngf_file_t *file_info);
+void ngf_res_body(ngf_res_body_t *file_info);
 
 // 
-void ngf_res_header(ngf_res_head_t *header, ngf_file_t *file_info);
+void ngf_res_header(ngf_res_head_t *header, ngf_res_body_t *file_info);
 
 //
 char* ngf_get_status_reason(int status_code);
 
 //
-ngf_res_head_t ngf_make_header(ngf_file_t *file_info);
+ngf_res_head_t ngf_make_header(ngf_res_body_t *file_info);
 
 //
 void ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv);
