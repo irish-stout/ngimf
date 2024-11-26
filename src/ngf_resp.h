@@ -8,6 +8,7 @@
 
 typedef struct
 {
+  char *name;
   char *data;
   size_t size;
   int status_code;
@@ -50,7 +51,7 @@ typedef struct
 char* ngf_res_content_type(char* buf);
 
 // Make HTML content from file.
-void ngf_res_body(ngf_file_t *file_info, char *file);
+void ngf_res_body(ngf_file_t *file_info);
 
 // 
 void ngf_res_header(ngf_res_head_t *header);

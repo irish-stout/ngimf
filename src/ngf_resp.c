@@ -71,21 +71,21 @@ char* ngf_res_content_type(char* file)
 
 
 void
-ngf_res_body(ngf_file_t *file_info, char *file)
+ngf_res_body(ngf_file_t *file_info)
 {
   FILE *fp;
 
   file_info->size = 0;
-  file_info->data = "";
   file_info->status_code = 200; 
-  fp = fopen(file, "rb");
+  fp = fopen(file_info->name, "rb");
   if (fp == NULL) 
   {
     char *file404 = "/404.html";
-    file = realloc(file, strlen(STATIC_PATH) + strlen(file404));
-    strcpy(file, STATIC_PATH);
-    strcat(file, file404);
-    fp = fopen(file, "rb");
+    size_t resize = strlen(STATIC_PATH) + strlen(file404);
+    file_info->name = realloc(file_info->name, resize);
+    strcpy(file_info->name, STATIC_PATH);
+    strcat(file_info->name, file404);
+    fp = fopen(file_info->name, "rb");
     if (fp == NULL) return;
     file_info->status_code = 404;
   }
@@ -177,10 +177,11 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
   // Response Body.
   // Content (Response body)
   ngf_file_t *file_info;
-  ngf_res_body(file_info, file);
+  file_info->name = file;
+  ngf_res_body(file_info);
   
   // Reponse Header.
-  ngf_res_head_t resHeader = ngf_make_header(file_info->size, file, file_info->status_code);
+  ngf_res_head_t resHeader = ngf_make_header(file_info->size, file_info->name, file_info->status_code);
 
   ngf_res_header(&resHeader);
   
@@ -192,7 +193,7 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
   memcpy(&res->data[resHeader.size], file_info->data, file_info->size);
 
   // Closing.
-  free(file);
+  free(file_info->name);
   free(file_info->data);
   free(resHeader.data);
 }
