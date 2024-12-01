@@ -12,32 +12,42 @@
 #include "ngf_resp.h"
 
 #define PORT 9999
-#define BUF_SIZE 2048
+// 1MB
+#define REQ_BUF_SIZE 1048576
 
-void closing(int fd, void *arg, char* data)
+void closing(int fd, void *arg, ngf_res_info_t *res, ngf_recv_info_t *recv)
 {
   if (arg != NULL) free(arg);
-  if (data != NULL) free(data);
+  if (res != NULL) 
+  {
+    free(res->data);
+  }
+
+  if (recv != NULL) 
+  {
+    free(recv->body);
+  }
   close(fd);
 }
 
 void* connection_handle(void *arg)
 {
-  char buf[BUF_SIZE];
+  char buf[REQ_BUF_SIZE];
   int accept_sockfd = *((int *)arg);
   
   // Receive
-  memset(buf, 0, BUF_SIZE);
-  if (recv(accept_sockfd, buf, BUF_SIZE, 0) < 0)
+  memset(buf, 0, REQ_BUF_SIZE);
+  if (recv(accept_sockfd, buf, REQ_BUF_SIZE, 0) < 0)
   {
-    closing(accept_sockfd, arg, NULL);
+    closing(accept_sockfd, arg, NULL, NULL);
     p("Error on receive");
     return NULL;
   }
+
   // Get receve info
   ngf_recv_info_t recv;
   ngf_get_recv_info(&recv, buf);
-  
+
   // make response data
   ngf_res_info_t res;
   ngf_make_res_info(&res, &recv);
@@ -45,12 +55,12 @@ void* connection_handle(void *arg)
   // Send.
   if (send(accept_sockfd, res.data, res.size, 0) < 0) 
   {
-    closing(accept_sockfd, arg, res.data);
+    closing(accept_sockfd, arg, &res, &recv);
     p("Error on send");
     return NULL;
   }
 
-  closing(accept_sockfd, arg, res.data);
+  closing(accept_sockfd, arg, &res, &recv);
 
   return NULL;
 }

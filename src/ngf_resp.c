@@ -179,7 +179,6 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
 {
   // file name
   char *path = recv->path[1] == '\0' ? "/index.html" : recv->path;
-  
   if (strcmp(path, "/redirect") == 0) {
     char *redirect = "HTTP/1.1 308 Permanent Redirect\r\n"
                     "Location: https://www.google.com/\r\n"
@@ -190,30 +189,29 @@ ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv)
     res->size = strlen(redirect);
     return;
   }
-
   char *file = (char *)malloc(strlen(STATIC_PATH) + strlen(path));
   strcpy(file, STATIC_PATH);
   strcat(file, path);
-
   // Response Body.
   // Content (Response body)
-  ngf_res_body_t *res_body;
-  res_body->name = file;
-  ngf_res_body(res_body);
+  ngf_res_body_t res_body;
+  res_body.name = file;
+  ngf_res_body(&res_body);
   
   // Reponse Header.
-  ngf_res_head_t *res_header;
-  ngf_res_header(res_header, res_body);
+  ngf_res_head_t res_header;
+  ngf_res_header(&res_header, &res_body);
   
   // Response.
-  res->size = res_header->size + res_body->size; 
+  res->size = res_header.size + res_body.size; 
   res->data = (char *)malloc(res->size);
+  
   memset(res->data, 0, res->size);
-  memcpy(res->data, res_header->data, res_header->size);
-  memcpy(&res->data[res_header->size], res_body->data, res_body->size);
-
+  memcpy(res->data, res_header.data, res_header.size);
+  memcpy(&res->data[res_header.size], res_body.data, res_body.size);
+  
   // Closing.
-  free(res_body->name);
-  free(res_body->data);
-  free(res_header->data);
+  free(res_body.name);
+  free(res_body.data);
+  free(res_header.data);
 }
