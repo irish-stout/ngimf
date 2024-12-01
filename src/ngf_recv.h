@@ -28,4 +28,6 @@ void ngf_get_recv_info(ngf_recv_info_t *recv, char* buf);
 
 int ngf_is_start_of(char *target, char *src);
 
+void ngf_recv_first_line(ngf_recv_info_t *recv, char* line);
+
 #endif

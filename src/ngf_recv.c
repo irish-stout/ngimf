@@ -103,101 +103,94 @@
 void
 ngf_get_recv_info(ngf_recv_info_t *recv, char* buf)
 {
-  int i = 0, j = 0;
+  int i = 0, j = 0, body = 0;
   char ch;
   short mode = 0;
   char str[2048];
-  // recv = (ngf_recv_info_t *)malloc(sizeof(ngf_recv_info_t));
-  
   do
   {
-    
     ch = buf[i++];
-    printf("%c", ch);
     if (ch == '\n')
     {
       if (mode == 0)
       {
         mode = 1;
-        char cc;
-        int k = 0, l = 0;
-        do
-        {
-          cc = str[k++];
-          if (cc == ' ') 
-          {
-            mode++;
-            l = 0;
-          }
-          else
-          {
-            switch(mode)
-            {
-              case 1:
-                recv->method[l++] = cc;
-                break;
-              case 2:
-                recv->path[l++] = cc;
-                break;
-              case 3:
-                recv->protocol[l++] = cc;
-                break;
-            }
-          }
-        }
-        while (cc != '\n');
+        ngf_recv_first_line(recv, str); 
       }
       else if (ngf_is_start_of("Content-Length: ", str) == 0)
       {
         // content-length
         int len = strlen("Content-Length: ");
         char dist[32];
-        strcpy(dist, &str[len - 1]);
-        p("Content-Length: ");
-        p(dist);
+        strcpy(dist, &str[len]);
+        recv->content_length = atoi(dist);
       }
       else if (ngf_is_start_of("content-type: ", str) == 0)
       {
         // content type
         int len = strlen("content-type: ");
-        char dist[32];
-        strcpy(dist, &str[len - 1]);
-        p("Content-type: ");
-        p(dist);
+        strcpy(recv->content_type, &str[len]);
       }
       else if (ngf_is_start_of("___internal-request-id: ", str) == 0)
       {
         // request_id
         int len = strlen("___internal-request-id: ");
-        char dist[32];
-        strcpy(dist, &str[len - 1]);
-        p("___internal-request-id:");
-        p(dist);
+        strcpy(recv->request_id, &str[len]);
       }
-      else if (ngf_is_start_of("", str) == 0)
+      else if ((unsigned int)buf[i] == 13)
       {
-        p("body");
-        // body
-        i++;
-        // size_t buf_size = strlen(buf);
-        // size_t body_size = buf_size - i;
-        // recv->body = (char*)realloc(recv->body, body_size);
-        // memcpy(recv->body, &buf[i], body_size);
-        // p(recv->body);
-        // break;
+        // request body.
+        i += 2;
+        recv->body = (char*)realloc(recv->body, recv->content_length);
+        strcpy(recv->body, &buf[i]);
+        break;
       }
-
+      
       // Reset.
       j = 0;
-      i++; 
       memset(str, 0, 2048);
     }
     else
     {
-      str[j++] = ch;
+      str[j++] = ch; 
+    }
+    
+
+  }
+  while (ch != '\0');  
+}
+
+
+void
+ngf_recv_first_line(ngf_recv_info_t *recv, char* line)
+{
+  char ch;
+  int i = 0, j = 0, mode = 0;
+  do
+  {
+    ch = line[i++];
+    if (ch == ' ' || ch == '\n' || ch == '\0') 
+    {
+      mode++;
+      j = 0;
+    }
+    else
+    {
+      switch(mode)
+      {
+        case 0:
+          recv->method[j++] = ch;
+          break;
+        case 1:
+          recv->path[j++] = ch;
+          break;
+        case 2:
+          recv->protocol[j++] = ch;
+          break;
+      }
     }
   }
-  while (i < 100000);  
+  while (ch != '\n');
 }
 
 
