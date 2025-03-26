@@ -1,7 +1,7 @@
-#ifndef _NGF_RESP_H_
-#define _NGF_RESP_H_
+#ifndef _rws_RESP_H_
+#define _rws_RESP_H_
 
-#include "ngf_recv.h"
+#include "rws_recv.h"
 
 #define CONTENT_SIZE 512
 #define STATIC_PATH "./static"
@@ -12,31 +12,31 @@ typedef struct
   char *data;
   size_t size;
   int status_code;
-} ngf_res_body_t;
+} rws_res_body_t;
 
 typedef struct
 {
   int code;
   char* reason;
-} ngf_res_status_t;
+} rws_res_status_t;
 
 
 typedef struct
 {
   char *protocol;
-  ngf_res_status_t status;
+  rws_res_status_t status;
   size_t content_length;
   char *content_type;
   char *data;
   size_t size;
-} ngf_res_head_t;
+} rws_res_head_t;
 
 typedef struct
 {
   /* data */
   char *data;
   size_t size;
-} ngf_res_info_t;
+} rws_res_info_t;
 
 
 // GET response conetnt-type.
@@ -48,21 +48,21 @@ typedef struct
 // JPEG file:    image/jpeg
 // svg file:     image/svg+xml
 // favicon file: image/vnd.microsoft.icon
-char* ngf_res_content_type(char* buf);
+char* rws_res_content_type(char* buf);
 
 // Make HTML content from file.
-void ngf_res_body(ngf_res_body_t *file_info);
+void rws_res_body(rws_res_body_t *file_info);
 
 // 
-void ngf_res_header(ngf_res_head_t *header, ngf_res_body_t *file_info);
+void rws_res_header(rws_res_head_t *header, rws_res_body_t *file_info);
 
 //
-char* ngf_get_status_reason(int status_code);
+char* rws_get_status_reason(int status_code);
 
 //
-ngf_res_head_t ngf_make_header(ngf_res_body_t *file_info);
+rws_res_head_t rws_make_header(rws_res_body_t *file_info);
 
 //
-void ngf_make_res_info(ngf_res_info_t *res, ngf_recv_info_t *recv);
+void rws_make_res_info(rws_res_info_t *res, rws_recv_info_t *recv);
 
 #endif

@@ -6,16 +6,16 @@
 #include <pthread.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include "ngf_utils.h"
-#include "ngf_recv.h"
-#include "ngf_server.h"
-#include "ngf_resp.h"
+#include "rws_utils.h"
+#include "rws_recv.h"
+#include "rws_server.h"
+#include "rws_resp.h"
 
-#define PORT 9999
+#define PORT 9000
 // 1MB
 #define REQ_BUF_SIZE 1048576
 
-void closing(int fd, void *arg, ngf_res_info_t *res, ngf_recv_info_t *recv)
+void closing(int fd, void *arg, rws_res_info_t *res, rws_recv_info_t *recv)
 {
   if (arg != NULL) free(arg);
   if (res != NULL) 
@@ -45,12 +45,12 @@ void* connection_handle(void *arg)
   }
 
   // Get receve info
-  ngf_recv_info_t recv;
-  ngf_get_recv_info(&recv, buf);
+  rws_recv_info_t recv;
+  rws_get_recv_info(&recv, buf);
 
   // make response data
-  ngf_res_info_t res;
-  ngf_make_res_info(&res, &recv);
+  rws_res_info_t res;
+  rws_make_res_info(&res, &recv);
 
   // Send.
   if (send(accept_sockfd, res.data, res.size, 0) < 0) 
@@ -66,25 +66,27 @@ void* connection_handle(void *arg)
 }
 
 
-void ngf_server()
+void rws_server()
 {
   int sockfd;
   socklen_t srvlen;
   struct sockaddr_in serv_addr;
-
+  
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) ngf_panic("Can't open socket!");
+  if (sockfd < 0) rws_panic("Can't open socket!");
 
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_addr.sin_port = htons(PORT);
 
   srvlen = sizeof(serv_addr);
-
+  
   if (bind(sockfd, (struct sockaddr *)&serv_addr, srvlen) < 0)
-    ngf_panic("Can't bind");
+    rws_panic("Can't bind");
 
-  if (listen(sockfd, SOMAXCONN) != 0) ngf_panic("Can't listen");
+  if (listen(sockfd, SOMAXCONN) != 0) rws_panic("Can't listen");
+
+  printf("Server is runnning at %d\n", PORT);
 
   // Main loop.
   for (;;)

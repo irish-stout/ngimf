@@ -1,5 +1,5 @@
-#ifndef _NGF_RECV_H_
-#define _NGF_RECV_H_
+#ifndef _rws_RECV_H_
+#define _rws_RECV_H_
 
 #include <stdio.h>
 
@@ -12,7 +12,7 @@ typedef struct
   char request_id[40];
   size_t content_length;
   char *body;
-} ngf_recv_info_t;
+} rws_recv_info_t;
 
 // Receive header sample
 // -----------------------------
@@ -24,10 +24,10 @@ typedef struct
 // Referer: http://172.22.156.143:9999/
 // Accept-Encoding: gzip, deflate
 // Accept-Language: en-US,en;q=0.9,ja;q=0.8
-void ngf_get_recv_info(ngf_recv_info_t *recv, char* buf);
+void rws_get_recv_info(rws_recv_info_t *recv, char* buf);
 
-int ngf_is_start_of(char *target, char *src);
+int rws_is_start_of(char *target, char *src);
 
-void ngf_recv_first_line(ngf_recv_info_t *recv, char* line);
+void rws_recv_first_line(rws_recv_info_t *recv, char* line);
 
 #endif
