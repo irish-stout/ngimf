@@ -1,0 +1,6 @@
+{
+	"files.associations": {
+		"*.fs": "fsharp",
+		"stdio.h": "c"
+	}
+}

@@ -1,8 +1,8 @@
 run:
 	@gcc \
-	./src/rws.c \
-	./src/rws_utils.c \
-	./src/rws_recv.c \
-	./src/rws_server.c \
-	./src/rws_resp.c \
+	./src/ngimf.c \
+	./src/ngf_utils.c \
+	./src/ngf_recv.c \
+	./src/ngf_server.c \
+	./src/ngf_resp.c \
 	&& ./a.out

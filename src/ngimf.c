@@ -1,4 +1,4 @@
-#include "rws_server.h"
+#include "ngf_server.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +10,6 @@ int main()
   // ...
 
   // real code.
-  rws_server();
+  ngf_server();
   return 0;
 }

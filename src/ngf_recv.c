@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
-#include "rws_recv.h"
-#include "rws_utils.h"
+#include "ngf_recv.h"
+#include "ngf_utils.h"
 
 void
-rws_get_recv_info(rws_recv_info_t *recv, char* buf)
+ngf_get_recv_info(ngf_recv_info_t *recv, char* buf)
 {
   int i = 0, j = 0, body = 0;
   char ch;
@@ -18,9 +18,9 @@ rws_get_recv_info(rws_recv_info_t *recv, char* buf)
       if (mode == 0)
       {
         mode = 1;
-        rws_recv_first_line(recv, str); 
+        ngf_recv_first_line(recv, str); 
       }
-      else if (rws_is_start_of("Content-Length: ", str) == 0)
+      else if (ngf_is_start_of("Content-Length: ", str) == 0)
       {
         // content-length
         int len = strlen("Content-Length: ");
@@ -28,13 +28,13 @@ rws_get_recv_info(rws_recv_info_t *recv, char* buf)
         strcpy(dist, &str[len]);
         recv->content_length = atoi(dist);
       }
-      else if (rws_is_start_of("content-type: ", str) == 0)
+      else if (ngf_is_start_of("content-type: ", str) == 0)
       {
         // content type
         int len = strlen("content-type: ");
         strcpy(recv->content_type, &str[len]);
       }
-      else if (rws_is_start_of("___internal-request-id: ", str) == 0)
+      else if (ngf_is_start_of("___internal-request-id: ", str) == 0)
       {
         // request_id
         int len = strlen("___internal-request-id: ");
@@ -65,7 +65,7 @@ rws_get_recv_info(rws_recv_info_t *recv, char* buf)
 
 
 void
-rws_recv_first_line(rws_recv_info_t *recv, char* line)
+ngf_recv_first_line(ngf_recv_info_t *recv, char* line)
 {
   char ch;
   int i = 0, j = 0, mode = 0;
@@ -98,7 +98,7 @@ rws_recv_first_line(rws_recv_info_t *recv, char* line)
 
 
 int
-rws_is_start_of(char *target, char *src)
+ngf_is_start_of(char *target, char *src)
 {
   int i, len, src_len;
 
